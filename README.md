@@ -155,4 +155,4 @@ Coordinates use the standard NHL rink system: center ice at (0,0), rink is 200×
 ## Related
 
 The Road Trip Fatigue analysis — a separate project measuring how players hold up deep in road trips:
-**[nhl-road-fatigue](https://github.com/yourusername/nhl-road-fatigue)**
+**[nhl-road-fatigue](https://github.com/mikeharman89/nhl-road-fatigue)**
