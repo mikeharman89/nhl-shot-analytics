@@ -541,21 +541,10 @@ async function loadSeason(season) {
       <p>Loading ${seasonLabel(season)} data…</p>
     </div>`;
 
-  // Try per-team file structure first, fall back to single file
-  let r = await fetch(`data/${season}/nhl_league_summary.json`);
-  if (!r.ok) {
-    // fallback to old single-file format
-    r = await fetch(`nhl_shots_${season}.json`);
-    if (!r.ok) throw new Error('File not found');
-    const fullData = await r.json();
-    DATA = { season, last_updated: fullData.last_updated, league_summary: fullData.league_summary };
-    // Pre-populate team cache from single file
-    for (const [abbr, td] of Object.entries(fullData.teams || {})) {
-      TEAM_CACHE[abbr] = td;
-    }
-  } else {
-    DATA = await r.json();
-  }
+  // Load league summary from flat data/ folder
+  const r = await fetch(`data/nhl_league_summary_${season}.json`);
+  if (!r.ok) throw new Error(`data/nhl_league_summary_${season}.json not found`);
+  DATA = await r.json();
 
   // Show last updated
   if (DATA.last_updated) {
@@ -574,7 +563,7 @@ async function loadTeamData(abbr) {
   const th = document.getElementById('teamHeader');
   if (th) th.innerHTML = `<div style="padding:20px 140px;color:var(--muted2);font-size:12px;font-style:italic;">Loading ${abbr} data…</div>`;
 
-  const r = await fetch(`data/${curSeason}/nhl_shots_${abbr}.json`);
+  const r = await fetch(`data/nhl_shots_${abbr}_${season}.json`);
   if (!r.ok) throw new Error(`No data file for ${abbr}`);
   const teamData = await r.json();
   TEAM_CACHE[abbr] = teamData;
