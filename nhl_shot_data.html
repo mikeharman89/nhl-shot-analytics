@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NHL Shot Analytics 2025/26</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0c0c0e;--bg1:#111114;--bg2:#18181c;--bg3:#202026;--bg4:#2c2c34;
+  --white:#e6e6e6;--muted:#555;--muted2:#888;--border:rgba(255,255,255,0.06);
+  --lav:#DDDBF1;--navy:#3C4F76;--sand:#D1BEB0;--stone:#AB9F9D;
+  --green:#3ecf8e;--red:#e07070;--amber:#c9a55e;--blue:#7eb8f7;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--white);min-height:100vh;}
+code{font-family:'JetBrains Mono',monospace;background:var(--bg3);padding:1px 6px;border-radius:3px;font-size:12px;color:var(--sand);}
+
+/* NAV */
+.top-nav{background:var(--bg1);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:200;}
+.nav-inner{max-width:1600px;margin:0 auto;padding:0 28px;display:flex;align-items:center;height:52px;gap:0;}
+.page-wrap{max-width:1600px;margin:0 auto;padding:0 140px;}
+.nav-brand{font-size:12px;font-weight:600;color:var(--lav);letter-spacing:0.04em;margin-right:16px;flex-shrink:0;cursor:pointer;}
+.nav-breadcrumb{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted2);margin-right:auto;}
+.nav-sep{color:var(--muted);}
+.nav-team{color:var(--lav);font-weight:500;}
+.nav-tabs{display:flex;gap:0;}
+.nav-tab{font-size:11px;color:var(--muted2);background:none;border:none;border-bottom:2px solid transparent;padding:0 16px;height:52px;cursor:pointer;transition:all 0.15s;font-family:'Inter',sans-serif;white-space:nowrap;}
+.nav-tab:hover{color:var(--white);}
+.nav-tab.active{color:var(--lav);border-bottom-color:var(--navy);}
+
+/* PAGES */
+.page{display:none;}
+.page.active{display:block;}
+
+/* SHARED */
+.sec-label{font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--stone);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.sec-label::before{content:'';display:block;width:12px;height:1px;background:var(--stone);}
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:1px;background:var(--border);}
+.stat-box{background:var(--bg1);padding:13px 16px;}
+.sl{font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted2);margin-bottom:4px;}
+.sv{font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:500;color:var(--white);line-height:1;}
+.sv.g{color:var(--green);}
+.sv.r{color:var(--red);}
+.sv.a{color:var(--amber);}
+.sv.b{color:var(--blue);}
+.filter-btn{padding:5px 12px;background:none;border:1px solid var(--border);border-radius:4px;color:var(--muted2);font-size:11px;font-family:'Inter',sans-serif;cursor:pointer;transition:all 0.15s;}
+.filter-btn:hover{color:var(--white);background:var(--bg2);}
+.filter-btn.active{background:rgba(60,79,118,0.35);border-color:rgba(60,79,118,0.6);color:var(--lav);}
+.chart-card{background:var(--bg1);border:1px solid var(--border);border-radius:5px;padding:18px;margin-bottom:16px;}
+.chart-card h3{font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--stone);margin-bottom:3px;}
+.cnote{font-size:11px;color:var(--muted2);font-style:italic;margin-bottom:14px;display:block;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.team-logo{width:24px;height:24px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.5));}
+.team-logo-fb{width:24px;height:24px;background:var(--bg3);border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:var(--muted2);font-family:'JetBrains Mono',monospace;flex-shrink:0;}
+.zone-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:middle;}
+
+/* ── LEAGUE HOME ── */
+.league-header{padding:22px 140px 16px;border-bottom:1px solid var(--border);background:var(--bg1);}
+.lh-eye{font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--stone);margin-bottom:5px;}
+.lh-title{font-size:22px;font-weight:600;color:var(--lav);margin-bottom:2px;}
+.lh-sub{font-size:12px;color:var(--muted2);}
+.league-controls{padding:10px 140px;background:var(--bg1);border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
+.league-controls label{font-size:10px;color:var(--muted2);}
+.league-controls select{background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:5px 9px;color:var(--white);font-size:11px;font-family:'Inter',sans-serif;outline:none;cursor:pointer;}
+.league-controls input{background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:5px 9px;color:var(--white);font-size:11px;font-family:'Inter',sans-serif;outline:none;width:160px;}
+.league-controls select:focus,.league-controls input:focus{border-color:rgba(221,219,241,0.3);}
+.league-controls input::placeholder{color:var(--muted);}
+.ltbl-wrap{overflow-x:auto;padding:20px 140px;}
+table.ltbl{width:100%;border-collapse:collapse;font-size:12px;min-width:900px;}
+table.ltbl thead tr{border-bottom:1px solid rgba(221,219,241,0.1);}
+table.ltbl th{font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted2);padding:8px 10px;text-align:left;cursor:pointer;user-select:none;white-space:nowrap;background:var(--bg1);position:sticky;top:0;}
+table.ltbl th:hover{color:var(--lavender);}
+table.ltbl th.s{color:var(--lav);}
+table.ltbl th.s::after{content:' ↓';}
+table.ltbl th.s.asc::after{content:' ↑';}
+table.ltbl td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,0.03);color:var(--stone);white-space:nowrap;vertical-align:middle;}
+table.ltbl tr:hover td{background:var(--bg2);color:var(--lav);cursor:pointer;}
+.lrow-team{display:flex;align-items:center;gap:9px;}
+.lrow-name{font-size:12px;font-weight:500;color:var(--white);}
+.lrow-abbr{font-size:9px;color:var(--muted2);font-family:'JetBrains Mono',monospace;}
+.mono{font-family:'JetBrains Mono',monospace;text-align:right;font-size:12px;}
+.dp{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;padding:2px 7px;border-radius:3px;display:inline-block;min-width:48px;text-align:center;}
+.dp.g{background:rgba(62,207,142,0.1);color:var(--green);}
+.dp.a{background:rgba(201,165,94,0.1);color:var(--amber);}
+.dp.r{background:rgba(224,112,112,0.1);color:var(--red);}
+.dp.n{background:var(--bg3);color:var(--muted2);}
+.rank{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);text-align:right;}
+.mini-bar{display:flex;align-items:center;gap:6px;}
+.mb-track{width:56px;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;flex-shrink:0;}
+.mb-fill{height:100%;border-radius:2px;}
+
+/* ── TEAM PAGE ── */
+.team-header{background:var(--bg1);border-bottom:1px solid var(--border);padding:20px 140px 14px;}
+.th-top{display:flex;align-items:center;gap:16px;margin-bottom:14px;}
+.th-logo{width:52px;height:52px;object-fit:contain;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.6));}
+.th-logo-fb{width:52px;height:52px;background:var(--bg3);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--muted2);font-family:'JetBrains Mono',monospace;}
+.th-eye{font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--stone);margin-bottom:3px;}
+.th-name{font-size:20px;font-weight:600;color:var(--lav);line-height:1;}
+.th-season{font-size:11px;color:var(--muted2);margin-top:2px;}
+.th-pills{display:flex;gap:18px;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--border);}
+.tp .tpl{font-size:9px;letter-spacing:0.09em;text-transform:uppercase;color:var(--muted2);margin-bottom:3px;}
+.tp .tpv{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:500;color:var(--white);}
+.tpv.g{color:var(--green);}
+.tpv.r{color:var(--red);}
+.tpv.a{color:var(--amber);}
+
+/* ── XG GAME SCORE ── */
+.xg-layout{display:grid;grid-template-columns:1fr 380px;min-height:calc(100vh - 52px);max-width:1600px;margin:0 auto;padding:0 140px;}
+.game-list-panel{display:flex;flex-direction:column;border-right:1px solid var(--border);}
+.filter-bar{padding:9px 20px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.filter-bar label{font-size:10px;color:var(--muted2);}
+.game-rows-wrap{overflow-y:auto;flex:1;max-height:calc(100vh - 250px);}
+.game-row{display:grid;grid-template-columns:68px 1fr 100px 100px 76px;gap:0;align-items:center;padding:9px 12px;border-radius:4px;cursor:pointer;transition:background 0.12s;margin-bottom:2px;border:1px solid transparent;}
+.game-row:hover{background:var(--bg2);}
+.game-row.active{background:rgba(60,79,118,0.2);border-color:rgba(60,79,118,0.35);}
+.gr-date{font-size:10px;color:var(--muted2);font-family:'JetBrains Mono',monospace;}
+.gr-matchup{display:flex;align-items:center;gap:7px;}
+.gr-opp{font-size:12px;font-weight:500;color:var(--white);}
+.gr-venue{font-size:9px;color:var(--muted2);}
+.gr-score{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;text-align:center;}
+.gr-score.w{color:var(--green);}
+.gr-score.l{color:var(--red);}
+.gr-xg{display:flex;flex-direction:column;align-items:center;gap:2px;}
+.xg-bar{width:88px;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;display:flex;}
+.xg-fill{height:100%;border-radius:3px;}
+.xg-nums{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted2);display:flex;gap:3px;}
+.gr-badge{font-size:9px;padding:2px 6px;border-radius:3px;font-weight:500;text-align:center;white-space:nowrap;}
+.b-out{background:rgba(62,207,142,0.15);color:var(--green);}
+.b-under{background:rgba(224,112,112,0.15);color:var(--red);}
+.b-exp{background:rgba(60,79,118,0.2);color:var(--blue);}
+.season-chart-section{padding:14px 20px;border-top:1px solid var(--border);}
+.game-detail-panel{background:var(--bg1);overflow-y:auto;max-height:calc(100vh - 52px);}
+.gd-empty{display:flex;align-items:center;justify-content:center;height:200px;color:var(--muted2);font-size:13px;font-style:italic;padding:20px;text-align:center;}
+.gd-hdr{padding:14px 16px;border-bottom:1px solid var(--border);}
+.gd-teams{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.gd-team{display:flex;flex-direction:column;align-items:center;gap:3px;}
+.gd-team-abbr{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--white);}
+.gd-score{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:500;line-height:1;}
+.gd-vs{font-size:11px;color:var(--muted2);}
+.gd-date{font-size:10px;color:var(--muted2);text-align:center;margin-bottom:5px;}
+.gd-verdict{text-align:center;font-size:10px;padding:5px 10px;border-radius:4px;display:block;}
+.gd-verdict.out{background:rgba(62,207,142,0.1);color:var(--green);}
+.gd-verdict.under{background:rgba(224,112,112,0.1);color:var(--red);}
+.gd-verdict.exp{background:rgba(60,79,118,0.15);color:var(--blue);}
+.xg-compare{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:10px 16px;border-bottom:1px solid var(--border);}
+.xgc{background:var(--bg2);border-radius:4px;padding:10px;text-align:center;}
+.xgc .xl{font-size:9px;letter-spacing:0.09em;text-transform:uppercase;color:var(--muted2);margin-bottom:4px;}
+.xgc .xv{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:500;line-height:1;}
+.xgc .xs{font-size:10px;color:var(--muted2);margin-top:3px;}
+.tl-wrap{padding:10px 16px;border-bottom:1px solid var(--border);}
+.tl-label{font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--stone);margin-bottom:8px;}
+.sb-wrap{padding:10px 16px;}
+table.sbt{width:100%;border-collapse:collapse;font-size:11px;}
+table.sbt th{font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted2);padding:4px 6px;border-bottom:1px solid var(--border);text-align:left;}
+table.sbt td{padding:4px 6px;border-bottom:1px solid rgba(255,255,255,0.03);color:var(--stone);}
+table.sbt .num{font-family:'JetBrains Mono',monospace;text-align:right;}
+/* View shot map from game */
+.view-in-map-btn{display:block;width:calc(100%-32px);margin:10px 16px;padding:8px;background:rgba(60,79,118,0.2);border:1px solid rgba(60,79,118,0.4);border-radius:4px;color:var(--lav);font-size:11px;font-family:'Inter',sans-serif;cursor:pointer;text-align:center;transition:all 0.15s;}
+.view-in-map-btn:hover{background:rgba(60,79,118,0.4);}
+
+/* ── SHOT MAP ── */
+.shot-map-layout{display:grid;grid-template-columns:256px 1fr;min-height:calc(100vh - 52px);max-width:1600px;margin:0 auto;padding:0 140px;}
+.shot-sidebar{background:var(--bg1);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;max-height:calc(100vh - 52px);}
+.shot-sidebar::-webkit-scrollbar{width:3px;}
+.shot-sidebar::-webkit-scrollbar-thumb{background:var(--bg4);}
+.ss-section{padding:11px 14px;border-bottom:1px solid var(--border);}
+.fg-row{display:flex;flex-direction:column;gap:3px;}
+.fg-row .filter-btn{width:100%;text-align:left;}
+.player-search{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:6px 9px;color:var(--white);font-size:11px;font-family:'Inter',sans-serif;outline:none;margin-bottom:5px;}
+.player-search:focus{border-color:rgba(221,219,241,0.3);}
+.player-search::placeholder{color:var(--muted);}
+.player-list{display:flex;flex-direction:column;gap:2px;max-height:180px;overflow-y:auto;}
+.player-list::-webkit-scrollbar{width:3px;}
+.player-list::-webkit-scrollbar-thumb{background:var(--bg4);}
+.player-btn{width:100%;padding:5px 8px;background:none;border:none;border-radius:3px;color:var(--muted2);font-size:11px;font-family:'Inter',sans-serif;cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center;transition:background 0.1s;}
+.player-btn:hover{background:var(--bg2);color:var(--white);}
+.player-btn.active{background:rgba(60,79,118,0.3);color:var(--lav);}
+.player-btn .ppct{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted2);}
+table.zt{width:100%;border-collapse:collapse;font-size:11px;}
+table.zt th{font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted2);padding:4px 5px;border-bottom:1px solid var(--border);text-align:left;}
+table.zt td{padding:4px 5px;border-bottom:1px solid rgba(255,255,255,0.03);color:var(--stone);}
+table.zt td:not(:first-child){font-family:'JetBrains Mono',monospace;text-align:right;}
+.shot-main{display:flex;flex-direction:column;}
+.shot-main-header{padding:11px 18px;border-bottom:1px solid var(--border);background:var(--bg1);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.smh-title{font-size:14px;font-weight:600;color:var(--lav);}
+.smh-sub{font-size:11px;color:var(--muted2);margin-top:1px;}
+.view-toggle{display:flex;gap:2px;}
+.vt-btn{padding:4px 10px;background:none;border:1px solid var(--border);color:var(--muted2);font-size:11px;font-family:'Inter',sans-serif;cursor:pointer;transition:all 0.15s;}
+.vt-btn:first-child{border-radius:4px 0 0 4px;}
+.vt-btn:last-child{border-radius:0 4px 4px 0;}
+.vt-btn.active{background:rgba(60,79,118,0.4);border-color:rgba(60,79,118,0.6);color:var(--lav);}
+.rink-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:14px;position:relative;}
+#rinkSvg{max-width:100%;max-height:calc(100vh - 130px);filter:drop-shadow(0 4px 20px rgba(0,0,0,0.6));}
+.charts-wrap{padding:16px 18px;display:none;grid-template-columns:1fr 1fr;gap:14px;}
+.charts-wrap.active{display:grid;}
+#shotTip{display:none;position:fixed;background:#13151a;border:1px solid rgba(221,219,241,0.15);border-radius:4px;padding:7px 11px;font-size:11px;color:var(--lav);pointer-events:none;z-index:300;box-shadow:0 4px 16px rgba(0,0,0,0.5);white-space:nowrap;}
+.game-active-banner{background:rgba(60,79,118,0.2);border-bottom:1px solid rgba(60,79,118,0.35);padding:7px 14px;font-size:11px;color:var(--lav);display:flex;align-items:center;justify-content:space-between;}
+.game-active-banner button{background:none;border:none;color:var(--muted2);font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;}
+.game-active-banner button:hover{color:var(--white);}
+
+/* Loading */
+.loading-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:16px;}
+.loading-screen p{font-size:13px;color:var(--muted2);font-style:italic;}
+.loading-spinner{width:32px;height:32px;border:2px solid var(--border);border-top-color:var(--lav);border-radius:50%;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+@media(max-width:900px){
+  .xg-layout,.shot-map-layout{grid-template-columns:1fr;}
+  .game-detail-panel,.shot-sidebar{display:none;}
+  .two-col,.charts-wrap{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="top-nav">
+  <div class="nav-inner">
+    <div class="nav-brand" onclick="showLeague()">NHL Shot Analytics</div>
+    <div class="nav-breadcrumb" id="navBreadcrumb"></div>
+    <div style="margin-right:auto;"></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-right:16px;">
+      <span style="font-size:10px;color:var(--muted2);">Season</span>
+      <select id="seasonSelect" onchange="switchSeason(this.value)"
+        style="background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:4px 8px;color:var(--lav);font-size:11px;font-family:'JetBrains Mono',monospace;outline:none;cursor:pointer;">
+      </select>
+      <span id="lastUpdated" style="font-size:10px;color:var(--muted);font-style:italic;"></span>
+    </div>
+    <div class="nav-tabs" id="navTabs" style="display:none;">
+      <button class="nav-tab active" id="tabXG" onclick="showTeamTab('xg',this)">xG Game Score</button>
+      <button class="nav-tab" id="tabShot" onclick="showTeamTab('shotmap',this)">Shot Map</button>
+    </div>
+  </div>
+</nav>
+
+<!-- PAGES -->
+<div class="page active" id="page-league">
+  <div class="league-header">
+    <div class="lh-eye">2025–26 Regular Season · All 32 Teams</div>
+    <div class="lh-title">xG League Table</div>
+    <div class="lh-sub" id="leagueSub">Loading…</div>
+  </div>
+  <div class="league-controls">
+    <label>Sort by</label>
+    <select id="leagueSort" onchange="renderLeagueTable()">
+      <option value="xg_diff">xG diff</option>
+      <option value="wins">Wins</option>
+      <option value="gf">Goals for</option>
+      <option value="xgf">Season xGF</option>
+      <option value="xga">Season xGA</option>
+      <option value="sh_pct">Sh%</option>
+      <option value="sv_pct">Sv%</option>
+      <option value="outperformed">Lucky wins</option>
+      <option value="underperformed">Unlucky losses</option>
+    </select>
+    <label style="margin-left:8px;">Order</label>
+    <select id="leagueOrder" onchange="renderLeagueTable()">
+      <option value="desc">Best first</option>
+      <option value="asc">Worst first</option>
+    </select>
+    <input type="text" id="leagueSearch" placeholder="Search team…" oninput="renderLeagueTable()">
+  </div>
+  <div class="ltbl-wrap">
+    <table class="ltbl">
+      <thead>
+        <tr>
+          <th class="rank" onclick="leagueSort('rank')">#</th>
+          <th onclick="leagueSort('name')">Team</th>
+          <th onclick="leagueSort('wins')">W</th>
+          <th onclick="leagueSort('losses')">L</th>
+          <th onclick="leagueSort('gf')">GF</th>
+          <th onclick="leagueSort('ga')">GA</th>
+          <th onclick="leagueSort('goal_diff')">GD</th>
+          <th onclick="leagueSort('xgf')">xGF</th>
+          <th onclick="leagueSort('xga')">xGA</th>
+          <th onclick="leagueSort('xg_diff')">xG Diff</th>
+          <th>xG bar</th>
+          <th onclick="leagueSort('xg_wins')">xG W</th>
+          <th onclick="leagueSort('sh_pct')">Sh%</th>
+          <th onclick="leagueSort('sv_pct')">Sv%</th>
+          <th onclick="leagueSort('outperformed')">Lucky W</th>
+          <th onclick="leagueSort('underperformed')">Unlucky L</th>
+        </tr>
+      </thead>
+      <tbody id="leagueTbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- TEAM XG PAGE -->
+<div class="page" id="page-xg">
+  <div id="teamHeader"></div>
+  <div class="stat-row" id="teamSummary" style="padding-left:140px;padding-right:140px;"></div>
+  <div class="xg-layout">
+    <div style="display:flex;flex-direction:column;">
+      <div class="filter-bar" id="xgFilterBar">
+        <label>Show</label>
+        <button class="filter-btn active" onclick="xgFilter('all',this)">All</button>
+        <button class="filter-btn" onclick="xgFilter('home',this)">Home</button>
+        <button class="filter-btn" onclick="xgFilter('away',this)">Away</button>
+        <button class="filter-btn" onclick="xgFilter('wins',this)">Wins</button>
+        <button class="filter-btn" onclick="xgFilter('losses',this)">Losses</button>
+        <button class="filter-btn" onclick="xgFilter('outperformed',this)">Lucky W</button>
+        <button class="filter-btn" onclick="xgFilter('underperformed',this)">Unlucky L</button>
+      </div>
+      <div class="game-rows-wrap" id="gameRows"></div>
+      <div class="season-chart-section">
+        <div class="sec-label">xGF / xGA — full season</div>
+        <div style="position:relative;height:160px;"><canvas id="seasonChart"></canvas></div>
+      </div>
+    </div>
+    <div class="game-detail-panel" id="gameDetail">
+      <div class="gd-empty">Select a game to see the xG breakdown</div>
+    </div>
+  </div>
+</div>
+
+<!-- TEAM SHOT MAP PAGE -->
+<div class="page" id="page-shotmap">
+  <div class="shot-map-layout">
+    <aside class="shot-sidebar">
+      <div class="ss-section">
+        <div class="sec-label">Totals</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">
+          <div class="stat-box" style="border-radius:4px;"><div class="sl">Shots</div><div class="sv b" id="smShots">—</div></div>
+          <div class="stat-box" style="border-radius:4px;"><div class="sl">Goals</div><div class="sv g" id="smGoals">—</div></div>
+          <div class="stat-box" style="border-radius:4px;"><div class="sl">Sh%</div><div class="sv a" id="smShPct">—</div></div>
+          <div class="stat-box" style="border-radius:4px;"><div class="sl">xG</div><div class="sv" id="smXG">—</div></div>
+        </div>
+      </div>
+      <div class="ss-section">
+        <div class="sec-label">Result</div>
+        <div class="fg-row">
+          <button class="filter-btn active" onclick="smResult('all',this)">All shots</button>
+          <button class="filter-btn" onclick="smResult('goal',this)">Goals</button>
+          <button class="filter-btn" onclick="smResult('shot-on-goal',this)">On goal</button>
+          <button class="filter-btn" onclick="smResult('missed-shot',this)">Missed</button>
+          <button class="filter-btn" onclick="smResult('blocked-shot',this)">Blocked</button>
+        </div>
+      </div>
+      <div class="ss-section">
+        <div class="sec-label">Situation</div>
+        <div class="fg-row">
+          <button class="filter-btn active" onclick="smSit('all',this)">All</button>
+          <button class="filter-btn" onclick="smSit('5v5',this)">5v5</button>
+          <button class="filter-btn" onclick="smSit('pp',this)">Power play</button>
+          <button class="filter-btn" onclick="smSit('pk',this)">Penalty kill</button>
+        </div>
+      </div>
+      <div class="ss-section">
+        <div class="sec-label">Period</div>
+        <div class="fg-row">
+          <button class="filter-btn active" onclick="smPeriod('all',this)">All</button>
+          <button class="filter-btn" onclick="smPeriod(1,this)">1st</button>
+          <button class="filter-btn" onclick="smPeriod(2,this)">2nd</button>
+          <button class="filter-btn" onclick="smPeriod(3,this)">3rd</button>
+          <button class="filter-btn" onclick="smPeriod(4,this)">OT</button>
+        </div>
+      </div>
+      <div class="ss-section">
+        <div class="sec-label">Show shots by</div>
+        <div class="fg-row">
+          <button class="filter-btn active" onclick="smTeam('team',this)">Home team</button>
+          <button class="filter-btn" onclick="smTeam('opp',this)">Opponent</button>
+          <button class="filter-btn" onclick="smTeam('both',this)">Both teams</button>
+        </div>
+      </div>
+      <div class="ss-section">
+        <div class="sec-label">Game</div>
+        <select id="smGameSelect" onchange="smSetGame(this.value)"
+          style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:6px 9px;color:var(--white);font-size:11px;font-family:'Inter',sans-serif;outline:none;cursor:pointer;">
+          <option value="">Full season</option>
+        </select>
+      </div>
+      <div class="ss-section" style="flex:1;">
+        <div class="sec-label">Player</div>
+        <input class="player-search" type="text" placeholder="Search player…" oninput="smSearchPlayer(this.value)">
+        <div class="player-list" id="playerList"></div>
+      </div>
+      <div class="ss-section">
+        <div class="sec-label">By zone</div>
+        <table class="zt">
+          <thead><tr><th>Zone</th><th>Shots</th><th>Gls</th><th>Sh%</th><th>xG</th></tr></thead>
+          <tbody id="zoneTbody"></tbody>
+        </table>
+      </div>
+    </aside>
+    <div class="shot-main">
+      <div class="shot-main-header">
+        <div>
+          <div class="smh-title" id="smTitle">All Skaters</div>
+          <div class="smh-sub" id="smSub">—</div>
+        </div>
+        <div class="view-toggle">
+          <button class="vt-btn active" onclick="smView('map',this)">Shot Map</button>
+          <button class="vt-btn" onclick="smView('charts',this)">Charts</button>
+        </div>
+      </div>
+      <div id="gameActiveBanner" style="display:none;" class="game-active-banner">
+        <span id="gameActiveBannerText"></span>
+        <button onclick="clearGameFilter()">× Clear game filter</button>
+      </div>
+      <div class="rink-wrap" id="rinkWrap">
+        <svg id="rinkSvg" viewBox="0 0 600 260" xmlns="http://www.w3.org/2000/svg">
+          <rect x="0" y="0" width="600" height="260" rx="28" fill="#c8dff0"/>
+          <rect x="0" y="0" width="600" height="260" rx="28" fill="none" stroke="#4a8ab0" stroke-width="3"/>
+          <line x1="300" y1="0" x2="300" y2="260" stroke="#e8333a" stroke-width="3"/>
+          <line x1="185" y1="0" x2="185" y2="260" stroke="#2255aa" stroke-width="3"/>
+          <line x1="415" y1="0" x2="415" y2="260" stroke="#2255aa" stroke-width="3"/>
+          <circle cx="300" cy="130" r="36" fill="none" stroke="#e8333a" stroke-width="1.5"/>
+          <circle cx="300" cy="130" r="3" fill="#e8333a"/>
+          <circle cx="120" cy="80" r="8" fill="none" stroke="#e8333a" stroke-width="1.5"/>
+          <circle cx="120" cy="80" r="2" fill="#e8333a"/>
+          <circle cx="120" cy="180" r="8" fill="none" stroke="#e8333a" stroke-width="1.5"/>
+          <circle cx="120" cy="180" r="2" fill="#e8333a"/>
+          <circle cx="480" cy="80" r="8" fill="none" stroke="#e8333a" stroke-width="1.5"/>
+          <circle cx="480" cy="80" r="2" fill="#e8333a"/>
+          <circle cx="480" cy="180" r="8" fill="none" stroke="#e8333a" stroke-width="1.5"/>
+          <circle cx="480" cy="180" r="2" fill="#e8333a"/>
+          <circle cx="120" cy="80" r="36" fill="none" stroke="#e8333a" stroke-width="1.5" stroke-dasharray="3 3"/>
+          <circle cx="120" cy="180" r="36" fill="none" stroke="#e8333a" stroke-width="1.5" stroke-dasharray="3 3"/>
+          <circle cx="480" cy="80" r="36" fill="none" stroke="#e8333a" stroke-width="1.5" stroke-dasharray="3 3"/>
+          <circle cx="480" cy="180" r="36" fill="none" stroke="#e8333a" stroke-width="1.5" stroke-dasharray="3 3"/>
+          <circle cx="230" cy="80" r="2.5" fill="#e8333a"/>
+          <circle cx="230" cy="180" r="2.5" fill="#e8333a"/>
+          <circle cx="370" cy="80" r="2.5" fill="#e8333a"/>
+          <circle cx="370" cy="180" r="2.5" fill="#e8333a"/>
+          <path d="M28,108 Q4,130 28,152" fill="#bed8ee" stroke="#2255aa" stroke-width="1.5"/>
+          <line x1="28" y1="108" x2="28" y2="152" stroke="#2255aa" stroke-width="1.5"/>
+          <path d="M572,108 Q596,130 572,152" fill="#bed8ee" stroke="#2255aa" stroke-width="1.5"/>
+          <line x1="572" y1="108" x2="572" y2="152" stroke="#2255aa" stroke-width="1.5"/>
+          <rect x="8" y="116" width="20" height="28" fill="none" stroke="#333" stroke-width="1.5" rx="1"/>
+          <rect x="572" y="116" width="20" height="28" fill="none" stroke="#333" stroke-width="1.5" rx="1"/>
+          <line x1="28" y1="0" x2="28" y2="260" stroke="#e8333a" stroke-width="1.5"/>
+          <line x1="572" y1="0" x2="572" y2="260" stroke="#e8333a" stroke-width="1.5"/>
+          <text x="490" y="248" text-anchor="middle" font-size="9" fill="rgba(0,0,50,0.25)" font-family="Inter,sans-serif" id="rinkLabelRight">OFFENSIVE ZONE</text>
+          <text x="110" y="248" text-anchor="middle" font-size="9" fill="rgba(0,0,50,0.0)" font-family="Inter,sans-serif" id="rinkLabelLeft">OPP SHOTS</text>
+          <g id="shotDots"></g>
+        </svg>
+      </div>
+      <div class="charts-wrap" id="chartsWrap">
+        <div class="chart-card" style="grid-column:1/-1;">
+          <h3>Shot distance distribution</h3>
+          <span class="cnote">Shots and goals by distance from net.</span>
+          <div style="position:relative;height:200px;"><canvas id="distChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>Shot type breakdown</h3>
+          <span class="cnote">Attempts and goals by shot type.</span>
+          <div style="position:relative;height:200px;"><canvas id="typeChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>Shooting % by zone</h3>
+          <span class="cnote">Goals / shots on goal per zone.</span>
+          <div style="position:relative;height:200px;"><canvas id="zoneChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="shotTip"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// GLOBALS
+// ══════════════════════════════════════════════════════════════════
+let DATA = {};                  // league summary JSON
+let TEAM_CACHE = {};            // lazy-loaded per-team data cache
+let curTeam = null;             // currently selected team abbr
+let curTeamData = null;         // currently loaded team data
+let curPage = 'league';
+let curSeason = '20252026';     // currently selected season
+
+// xG page state
+let xgActiveFilter = 'all';
+let xgActiveGame = null;
+let timelineChart = null, seasonChart = null;
+
+// Shot map state
+let smFilters = {result:'all', sit:'all', period:'all', player:null, game:null, team:'team'};
+let smCurrentView = 'map';
+let distChart = null, typeChart = null, zoneChart = null;
+
+// League table state
+let leagueSortCol = 'xg_diff';
+let leagueSortAsc = false;
+
+const LOGO = a => `https://assets.nhle.com/logos/nhl/svg/${a}_light.svg`;
+const ZONES = {
+  crease:   {label:'Crease',   color:'#e07070'},
+  slot:     {label:'Slot',     color:'#c9a55e'},
+  mid:      {label:'Mid',      color:'#3C4F76'},
+  perimeter:{label:'Perimeter',color:'#AB9F9D'},
+  unknown:  {label:'Unknown',  color:'#444'},
+};
+const RESULT_COLORS = {
+  'goal':'#3ecf8e', 'shot-on-goal':'#DDDBF1',
+  'missed-shot':'#e07070', 'blocked-shot':'#fbbf24'
+};
+
+// ══════════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════════
+// Detect available season files and populate the selector
+const KNOWN_SEASONS = ['20252026','20262027','20272028','20282029'];
+
+async function detectSeasons() {
+  const available = [];
+  for (const s of KNOWN_SEASONS) {
+    try {
+      const r = await fetch(`data/nhl_league_summary_${s}.json`, {method:'HEAD'});
+      if (r.ok) available.push(s);
+    } catch {}
+  }
+  return available;
+}
+
+function seasonLabel(s) {
+  return `${s.slice(0,4)}–${s.slice(6)}`;
+}
+
+async function switchSeason(season) {
+  curTeam = null;
+  curTeamData = null;
+  document.getElementById('navBreadcrumb').innerHTML = '';
+  document.getElementById('navTabs').style.display = 'none';
+  await loadSeason(season);
+  showLeague();
+}
+
+async function loadSeason(season) {
+  curSeason = season;
+  TEAM_CACHE = {}; // clear cache when switching seasons
+  document.getElementById('page-league').innerHTML = `
+    <div class="loading-screen">
+      <div class="loading-spinner"></div>
+      <p>Loading ${seasonLabel(season)} data…</p>
+    </div>`;
+
+  // Try per-team file structure first, fall back to single file
+  let r = await fetch(`data/${season}/nhl_league_summary.json`);
+  if (!r.ok) {
+    // fallback to old single-file format
+    r = await fetch(`nhl_shots_${season}.json`);
+    if (!r.ok) throw new Error('File not found');
+    const fullData = await r.json();
+    DATA = { season, last_updated: fullData.last_updated, league_summary: fullData.league_summary };
+    // Pre-populate team cache from single file
+    for (const [abbr, td] of Object.entries(fullData.teams || {})) {
+      TEAM_CACHE[abbr] = td;
+    }
+  } else {
+    DATA = await r.json();
+  }
+
+  // Show last updated
+  if (DATA.last_updated) {
+    const d = new Date(DATA.last_updated);
+    const fmt = d.toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    const el = document.getElementById('lastUpdated');
+    if (el) el.textContent = `Updated ${fmt}`;
+  }
+}
+
+// Lazy-load a team's shot data on demand
+async function loadTeamData(abbr) {
+  if (TEAM_CACHE[abbr]) return TEAM_CACHE[abbr];
+
+  // Show loading indicator in team header area
+  const th = document.getElementById('teamHeader');
+  if (th) th.innerHTML = `<div style="padding:20px 140px;color:var(--muted2);font-size:12px;font-style:italic;">Loading ${abbr} data…</div>`;
+
+  const r = await fetch(`data/${curSeason}/nhl_shots_${abbr}.json`);
+  if (!r.ok) throw new Error(`No data file for ${abbr}`);
+  const teamData = await r.json();
+  TEAM_CACHE[abbr] = teamData;
+  return teamData;
+}
+
+async function init() {
+  // Detect available season files
+  const seasons = await detectSeasons();
+  const sel = document.getElementById('seasonSelect');
+  if (seasons.length === 0) {
+    // No files found at all — fallback to trying 20252026
+    seasons.push('20252026');
+  }
+  seasons.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s;
+    opt.textContent = seasonLabel(s);
+    sel.appendChild(opt);
+  });
+  const defaultSeason = seasons[seasons.length - 1]; // most recent
+  sel.value = defaultSeason;
+
+  try {
+    await loadSeason(defaultSeason);
+    const n = Object.keys(DATA.teams||{}).length;
+    document.getElementById('page-league').innerHTML = `
+      <div class="league-header">
+        <div class="lh-eye">2025–26 Regular Season · All ${n} Teams</div>
+        <div class="lh-title">xG League Table</div>
+        <div class="lh-sub">${n} teams · Click any team to explore shots, xG game scores, and shot maps</div>
+      </div>
+      <div class="league-controls">
+        <label>Sort by</label>
+        <select id="leagueSort" onchange="renderLeagueTable()">
+          <option value="xg_diff">xG diff</option>
+          <option value="wins">Wins</option>
+          <option value="gf">Goals for</option>
+          <option value="xgf">Season xGF</option>
+          <option value="xga">Season xGA</option>
+          <option value="sh_pct">Sh%</option>
+          <option value="sv_pct">Sv%</option>
+          <option value="outperformed">Lucky wins</option>
+          <option value="underperformed">Unlucky losses</option>
+        </select>
+        <label style="margin-left:8px;">Order</label>
+        <select id="leagueOrder" onchange="renderLeagueTable()">
+          <option value="desc">Best first</option>
+          <option value="asc">Worst first</option>
+        </select>
+        <input type="text" id="leagueSearch" placeholder="Search team…" oninput="renderLeagueTable()" style="background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:5px 9px;color:var(--white);font-size:11px;font-family:'Inter',sans-serif;outline:none;width:160px;">
+      </div>
+      <div class="ltbl-wrap">
+        <table class="ltbl">
+          <thead><tr>
+            <th style="width:28px">#</th>
+            <th>Team</th>
+            <th class="mono" onclick="leagueSort('wins')" style="cursor:pointer">W</th>
+            <th class="mono" onclick="leagueSort('losses')" style="cursor:pointer">L</th>
+            <th class="mono" onclick="leagueSort('gf')" style="cursor:pointer">GF</th>
+            <th class="mono" onclick="leagueSort('ga')" style="cursor:pointer">GA</th>
+            <th class="mono" onclick="leagueSort('goal_diff')" style="cursor:pointer">GD</th>
+            <th class="mono" onclick="leagueSort('xgf')" style="cursor:pointer">xGF</th>
+            <th class="mono" onclick="leagueSort('xga')" style="cursor:pointer">xGA</th>
+            <th onclick="leagueSort('xg_diff')" style="cursor:pointer">xG diff</th>
+            <th>xG bar</th>
+            <th class="mono" onclick="leagueSort('xg_wins')" style="cursor:pointer">xG W</th>
+            <th class="mono" onclick="leagueSort('sh_pct')" style="cursor:pointer">Sh%</th>
+            <th class="mono" onclick="leagueSort('sv_pct')" style="cursor:pointer">Sv%</th>
+            <th class="mono" onclick="leagueSort('outperformed')" style="cursor:pointer">Lucky W</th>
+            <th class="mono" onclick="leagueSort('underperformed')" style="cursor:pointer">Unlucky L</th>
+          </tr></thead>
+          <tbody id="leagueTbody"></tbody>
+        </table>
+      </div>`;
+    renderLeagueTable();
+  } catch(e) {
+    console.error('Load error:', e);
+    document.getElementById('page-league').innerHTML = `
+      <div class="loading-screen">
+        <p>Run <code>python update_pipeline.py</code> to generate the data file, then reload.</p>
+      </div>`;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// LEAGUE TABLE
+// ══════════════════════════════════════════════════════════════════
+function leagueSort(col) {
+  if (leagueSortCol === col) leagueSortAsc = !leagueSortAsc;
+  else { leagueSortCol = col; leagueSortAsc = false; }
+  renderLeagueTable();
+}
+
+function renderLeagueTable() {
+  const sortEl = document.getElementById('leagueSort');
+  const orderEl = document.getElementById('leagueOrder');
+  const searchEl = document.getElementById('leagueSearch');
+  const sortBy = leagueSortCol;
+  const asc = leagueSortAsc;
+  const q = (searchEl?.value||'').toLowerCase();
+
+  let rows = DATA.league_summary || [];
+  if (q) rows = rows.filter(r =>
+    r.name.toLowerCase().includes(q) || r.abbr.toLowerCase().includes(q)
+  );
+
+  rows = [...rows].sort((a,b) => {
+    let av = a[sortBy] ?? (asc ? Infinity : -Infinity);
+    let bv = b[sortBy] ?? (asc ? Infinity : -Infinity);
+    return asc ? av - bv : bv - av;
+  });
+
+  const maxXGD = Math.max(...rows.map(r => Math.abs(r.xg_diff||0)), 1);
+
+  document.getElementById('leagueTbody').innerHTML = rows.map((r, i) => {
+    const dc = r.xg_diff > 0.5 ? 'g' : r.xg_diff < -0.5 ? 'r' : 'a';
+    const gdc = r.goal_diff > 0 ? 'g' : r.goal_diff < 0 ? 'r' : 'a';
+    const pct = Math.min(Math.abs(r.xg_diff||0) / maxXGD * 100, 100);
+    const barColor = r.xg_diff >= 0 ? '#3ecf8e' : '#e07070';
+    return `<tr onclick="selectTeam('${r.abbr}')">
+      <td class="rank">${i+1}</td>
+      <td>
+        <div class="lrow-team">
+          <img class="team-logo" src="${LOGO(r.abbr)}" alt="${r.abbr}"
+            onerror="this.outerHTML='<div class=team-logo-fb>${r.abbr}</div>'">
+          <div><div class="lrow-name">${r.name}</div><div class="lrow-abbr">${r.abbr}</div></div>
+        </div>
+      </td>
+      <td class="mono">${r.wins}</td>
+      <td class="mono">${r.losses}</td>
+      <td class="mono" style="color:var(--green)">${r.gf}</td>
+      <td class="mono" style="color:var(--red)">${r.ga}</td>
+      <td><span class="dp ${gdc}">${r.goal_diff>0?'+':''}${r.goal_diff}</span></td>
+      <td class="mono">${r.xgf}</td>
+      <td class="mono">${r.xga}</td>
+      <td><span class="dp ${dc}">${r.xg_diff>0?'+':''}${r.xg_diff}</span></td>
+      <td>
+        <div class="mini-bar">
+          <div class="mb-track"><div class="mb-fill" style="width:${pct}%;background:${barColor};"></div></div>
+        </div>
+      </td>
+      <td class="mono">${r.xg_wins}</td>
+      <td class="mono">${r.sh_pct}%</td>
+      <td class="mono">${r.sv_pct}</td>
+      <td class="mono" style="color:var(--amber)">${r.outperformed}</td>
+      <td class="mono" style="color:var(--red)">${r.underperformed}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// TEAM SELECTION
+// ══════════════════════════════════════════════════════════════════
+async function selectTeam(abbr) {
+  curTeam = abbr;
+
+  try {
+    curTeamData = await loadTeamData(abbr);
+  } catch(e) {
+    console.error('Failed to load team data:', e);
+    return;
+  }
+
+  // Reset state
+  xgActiveFilter = 'all';
+  xgActiveGame = null;
+  smFilters = {result:'all', sit:'all', period:'all', player:null, game:null, team:'team'};
+  smCurrentView = 'map';
+  if (timelineChart) { timelineChart.destroy(); timelineChart = null; }
+  if (seasonChart)   { seasonChart.destroy();   seasonChart   = null; }
+  if (distChart)     { distChart.destroy();     distChart     = null; }
+  if (typeChart)     { typeChart.destroy();     typeChart     = null; }
+  if (zoneChart)     { zoneChart.destroy();     zoneChart     = null; }
+
+  // Update nav
+  const lr = (DATA.league_summary||[]).find(r=>r.abbr===abbr);
+  document.getElementById('navBreadcrumb').innerHTML =
+    `<span style="cursor:pointer;color:var(--muted2)" onclick="showLeague()">League</span>
+     <span class="nav-sep">›</span>
+     <span class="nav-team">${lr?.name||abbr}</span>`;
+  document.getElementById('navTabs').style.display = 'flex';
+
+  buildTeamHeader(lr);
+  buildTeamSummary(lr);
+  showTeamPage('xg');
+  renderGameRows();
+  setTimeout(drawSeasonChart, 100);
+  buildPlayerList();
+  populateGameSelect();
+  smRender();
+}
+
+function showLeague() {
+  curTeam = null;
+  curTeamData = null;
+  document.getElementById('navBreadcrumb').innerHTML = '';
+  document.getElementById('navTabs').style.display = 'none';
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-league').classList.add('active');
+}
+
+function showTeamPage(tab) {
+  curPage = tab;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + tab).classList.add('active');
+}
+
+function showTeamTab(tab, btn) {
+  document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  showTeamPage(tab);
+  if (tab === 'shotmap') smRender();
+}
+
+function buildTeamHeader(lr) {
+  if (!lr) return;
+  document.getElementById('teamHeader').innerHTML = `
+    <div class="team-header">
+      <div class="th-top">
+        <img class="th-logo" src="${LOGO(curTeam)}" alt="${curTeam}"
+          onerror="this.outerHTML='<div class=th-logo-fb>${curTeam}</div>'">
+        <div>
+          <div class="th-eye">Shot Analytics · 2025–26</div>
+          <div class="th-name">${lr.name}</div>
+          <div style="display:flex;gap:16px;margin-top:4px;align-items:center;">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--white);">${lr.wins}–${lr.losses}</span>
+            <span style="font-size:10px;color:var(--muted2);">Record</span>
+            <span style="color:var(--muted);font-size:11px;">·</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--blue);">${lr.xg_wins}–${lr.games-lr.xg_wins}</span>
+            <span style="font-size:10px;color:var(--muted2);">xG record</span>
+            <span style="color:var(--muted);font-size:11px;">·</span>
+            <span style="font-size:10px;color:var(--muted2);">${lr.games} games</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function buildTeamSummary(lr) {
+  if (!lr) return;
+  const gs = curTeamData.game_summaries || [];
+  const actualGF = gs.reduce((s,g)=>s+(g.team_score||0),0);
+  const actualGA = gs.reduce((s,g)=>s+(g.opp_score||0),0);
+  const gd = actualGF - actualGA;
+  document.getElementById('teamSummary').innerHTML = `
+    <div class="stat-box"><div class="sl">Goals for</div><div class="sv g">${actualGF}</div></div>
+    <div class="stat-box"><div class="sl">Goals against</div><div class="sv r">${actualGA}</div></div>
+    <div class="stat-box"><div class="sl">Goal diff</div><div class="sv ${gd>=0?'g':'r'}">${gd>0?'+':''}${gd}</div></div>
+    <div class="stat-box"><div class="sl">Season xGF</div><div class="sv g">${lr.xgf}</div></div>
+    <div class="stat-box"><div class="sl">Season xGA</div><div class="sv r">${lr.xga}</div></div>
+    <div class="stat-box"><div class="sl">xG diff</div><div class="sv ${lr.xg_diff>=0?'g':'r'}">${lr.xg_diff>0?'+':''}${lr.xg_diff}</div></div>
+    <div class="stat-box"><div class="sl">Avg xGF/G</div><div class="sv">${lr.avg_xgf}</div></div>
+    <div class="stat-box"><div class="sl">Avg xGA/G</div><div class="sv">${lr.avg_xga}</div></div>
+    <div class="stat-box"><div class="sl">Sh%</div><div class="sv a">${lr.sh_pct}%</div></div>
+    <div class="stat-box"><div class="sl">Lucky wins</div><div class="sv a">${lr.outperformed}</div></div>
+    <div class="stat-box"><div class="sl">Unlucky L</div><div class="sv r">${lr.underperformed}</div></div>`;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// XG GAME SCORE
+// ══════════════════════════════════════════════════════════════════
+function xgFilter(f, btn) {
+  xgActiveFilter = f;
+  document.querySelectorAll('#xgFilterBar .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderGameRows();
+}
+
+function xgGetFiltered() {
+  const gs = curTeamData?.game_summaries || [];
+  return gs.filter(g => {
+    if (xgActiveFilter === 'home')          return g.is_home;
+    if (xgActiveFilter === 'away')          return !g.is_home;
+    if (xgActiveFilter === 'wins')          return g.team_won;
+    if (xgActiveFilter === 'losses')        return !g.team_won;
+    if (xgActiveFilter === 'outperformed')  return g.outperformed;
+    if (xgActiveFilter === 'underperformed')return g.underperformed;
+    return true;
+  });
+}
+
+function renderGameRows() {
+  const games = xgGetFiltered();
+  document.getElementById('gameRows').innerHTML = games.map(g => {
+    const pct = Math.min(g.xgf / Math.max(g.xgf + g.xga, 0.1) * 100, 100);
+    const badge = g.outperformed ? `<span class="gr-badge b-out">Lucky W</span>`
+      : g.underperformed ? `<span class="gr-badge b-under">Unlucky L</span>`
+      : `<span class="gr-badge b-exp">${g.xg_won ? 'xG W' : 'xG L'}</span>`;
+    return `<div class="game-row ${xgActiveGame===g.game_id?'active':''}" onclick="selectGame(${g.game_id})">
+      <div class="gr-date">${g.date.slice(5)}</div>
+      <div class="gr-matchup">
+        <img class="team-logo" src="${LOGO(g.opponent)}" alt="${g.opponent}"
+          onerror="this.outerHTML='<div class=team-logo-fb>${g.opponent}</div>'">
+        <div><div class="gr-opp">${g.opponent}</div><div class="gr-venue">${g.is_home?'HOME':'AWAY'}</div></div>
+      </div>
+      <div class="gr-score ${g.team_won?'w':'l'}">${g.team_score??'—'}–${g.opp_score??'—'}</div>
+      <div class="gr-xg">
+        <div class="xg-bar">
+          <div class="xg-fill" style="width:${pct}%;background:var(--green);opacity:0.8;"></div>
+          <div class="xg-fill" style="width:${100-pct}%;background:var(--red);opacity:0.7;"></div>
+        </div>
+        <div class="xg-nums">
+          <span style="color:var(--green)">${g.xgf}</span>
+          <span>vs</span>
+          <span style="color:var(--red)">${g.xga}</span>
+        </div>
+      </div>
+      <div>${badge}</div>
+    </div>`;
+  }).join('');
+}
+
+function selectGame(gid) {
+  xgActiveGame = gid;
+  renderGameRows();
+  const g = (curTeamData?.game_summaries||[]).find(x => x.game_id === gid);
+  const shots = (curTeamData?.shots||[]).filter(s => s.game_id === gid);
+  if (!g) return;
+
+  const vClass = g.outperformed ? 'out' : g.underperformed ? 'under' : 'exp';
+  const vText = g.outperformed ? `Won despite xG deficit (${g.xgf} vs ${g.xga})`
+    : g.underperformed ? `Lost despite xG advantage (${g.xgf} vs ${g.xga})`
+    : g.xg_won ? `Won as xG suggested` : `Lost as xG suggested`;
+
+  const zOrder = ['crease','slot','mid','perimeter'];
+  const zLabel = {crease:'Crease',slot:'Slot',mid:'Mid',perimeter:'Perimeter'};
+  const forShots = shots.filter(s => s.shooting_team === curTeam);
+  const agstShots = shots.filter(s => s.shooting_team !== curTeam);
+  const utaZ = zBreak(forShots, zOrder);
+  const oppZ = zBreak(agstShots, zOrder);
+
+  document.getElementById('gameDetail').innerHTML = `
+    <div class="gd-hdr">
+      <div class="gd-date">${g.date} · ${g.is_home?'HOME':'AWAY'}</div>
+      <div class="gd-teams">
+        <div class="gd-team">
+          <img style="width:34px;height:34px;object-fit:contain" src="${LOGO(curTeam)}" alt="${curTeam}"
+            onerror="this.innerHTML='${curTeam}'">
+          <div class="gd-team-abbr">${curTeam}</div>
+          <div class="gd-score" style="color:${g.team_won?'var(--green)':'var(--red)'}">${g.team_score??'—'}</div>
+        </div>
+        <div class="gd-vs">vs</div>
+        <div class="gd-team">
+          <img style="width:34px;height:34px;object-fit:contain" src="${LOGO(g.opponent)}" alt="${g.opponent}"
+            onerror="this.innerHTML='${g.opponent}'">
+          <div class="gd-team-abbr">${g.opponent}</div>
+          <div class="gd-score" style="color:${!g.team_won?'var(--green)':'var(--red)'}">${g.opp_score??'—'}</div>
+        </div>
+      </div>
+      <div class="gd-verdict ${vClass}">${vText}</div>
+    </div>
+    <div class="xg-compare">
+      <div class="xgc"><div class="xl">${curTeam} xGF</div><div class="xv g">${g.xgf}</div><div class="xs">${g.team_sog} SOG · ${g.team_sh_pct}%</div></div>
+      <div class="xgc"><div class="xl">${g.opponent} xGA</div><div class="xv r">${g.xga}</div><div class="xs">${g.opp_sog} SOG · ${g.opp_sh_pct}%</div></div>
+    </div>
+    <div class="tl-wrap">
+      <div class="tl-label">Running xG — shot by shot</div>
+      <div style="position:relative;height:130px;"><canvas id="tlChart"></canvas></div>
+    </div>
+    <div class="sb-wrap">
+      <div class="sec-label">Shot breakdown by zone</div>
+      <table class="sbt">
+        <thead><tr><th>Zone</th><th>${curTeam} shots</th><th>${curTeam} xGF</th><th>${g.opponent} shots</th><th>${g.opponent} xGA</th></tr></thead>
+        <tbody>${zOrder.map(z=>`<tr>
+          <td>${zLabel[z]}</td>
+          <td class="num">${utaZ[z]?.shots||0}</td>
+          <td class="num" style="color:var(--green)">${(utaZ[z]?.xg||0).toFixed(2)}</td>
+          <td class="num">${oppZ[z]?.shots||0}</td>
+          <td class="num" style="color:var(--red)">${(oppZ[z]?.xg||0).toFixed(2)}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>
+    <button class="view-in-map-btn" onclick="viewGameInShotMap(${gid},'${g.date}','${g.opponent}')">
+      View shots from this game in Shot Map →
+    </button>`;
+
+  drawTimeline(shots, g);
+}
+
+// Link xG game → shot map with game pre-filtered
+function viewGameInShotMap(gid, date, opponent) {
+  smFilters.game = gid;
+  // Sync dropdown
+  const sel = document.getElementById('smGameSelect');
+  if (sel) sel.value = gid;
+  const banner = document.getElementById('gameActiveBanner');
+  const bannerText = document.getElementById('gameActiveBannerText');
+  if (banner && bannerText) {
+    bannerText.textContent = `Showing shots from: ${date} vs ${opponent}`;
+    banner.style.display = 'flex';
+  }
+  showTeamTab('shotmap', document.getElementById('tabShot'));
+  smRender();
+}
+
+function clearGameFilter() {
+  smFilters.game = null;
+  const banner = document.getElementById('gameActiveBanner');
+  if (banner) banner.style.display = 'none';
+  smRender();
+}
+
+function zBreak(shots, zones) {
+  const out = {};
+  for (const z of zones) out[z] = {shots:0, xg:0};
+  for (const s of shots) {
+    const z = s.zone;
+    if (out[z]) { out[z].shots++; out[z].xg += s.xg||0; }
+  }
+  return out;
+}
+
+function drawTimeline(shots, g) {
+  const sorted = [...shots].sort((a,b) => (a.time_elapsed||0)-(b.time_elapsed||0));
+  let uXG=0, oXG=0;
+  const labels=['0:00'], uLine=[0], oLine=[0], uGoals=[], oGoals=[];
+  for (const s of sorted) {
+    const lbl = `P${s.period} ${s.time}`;
+    const isFor = s.shooting_team === curTeam;
+    if (isFor) uXG += s.xg||0; else oXG += s.xg||0;
+    labels.push(lbl);
+    uLine.push(+uXG.toFixed(3));
+    oLine.push(+oXG.toFixed(3));
+    if (s.is_goal && isFor)  uGoals.push({x:lbl, y:+uXG.toFixed(3)});
+    if (s.is_goal && !isFor) oGoals.push({x:lbl, y:+oXG.toFixed(3)});
+  }
+  if (timelineChart) timelineChart.destroy();
+  const gc = 'rgba(255,255,255,0.04)';
+  const tt = {backgroundColor:'#13151a',borderColor:'rgba(221,219,241,0.15)',borderWidth:1,
+              titleColor:'#DDDBF1',bodyColor:'#AB9F9D',padding:8,
+              callbacks:{label:c=>` ${c.dataset.label}: ${Math.abs(c.parsed.y).toFixed(2)} xG`}};
+  timelineChart = new Chart(document.getElementById('tlChart'), {
+    type: 'line',
+    data: {labels, datasets:[
+      {label:`${curTeam} xGF`, data:uLine, borderColor:'#3ecf8e', backgroundColor:'rgba(62,207,142,0.08)',borderWidth:2.5,pointRadius:0,fill:true,tension:0.1},
+      {label:`${g.opponent} xGA`, data:oLine, borderColor:'#e07070', backgroundColor:'rgba(224,112,112,0.06)',borderWidth:2.5,pointRadius:0,fill:true,tension:0.1},
+      {label:`${curTeam} goal`, data:uGoals, backgroundColor:'#3ecf8e',borderColor:'#fff',borderWidth:1,pointRadius:6,pointStyle:'triangle',showLine:false,type:'scatter'},
+      {label:'OPP goal', data:oGoals, backgroundColor:'#e07070',borderColor:'#fff',borderWidth:1,pointRadius:6,pointStyle:'triangle',rotation:180,showLine:false,type:'scatter'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:true,labels:{color:'#888',font:{size:10},boxWidth:8,usePointStyle:true}},tooltip:tt},
+      scales:{x:{display:false,grid:{color:gc}},
+              y:{grid:{color:gc},ticks:{color:'#888',font:{size:10},callback:v=>v.toFixed(1)}}}}
+  });
+}
+
+function drawSeasonChart() {
+  const gs = curTeamData?.game_summaries||[];
+  if (!gs.length) return;
+  const gc = 'rgba(255,255,255,0.04)';
+  const tt = {backgroundColor:'#13151a',borderColor:'rgba(221,219,241,0.15)',borderWidth:1,
+              titleColor:'#DDDBF1',bodyColor:'#AB9F9D',padding:8,
+              callbacks:{label:c=>` ${c.dataset.label}: ${Math.abs(c.parsed.y).toFixed(2)}`}};
+  if (seasonChart) seasonChart.destroy();
+  seasonChart = new Chart(document.getElementById('seasonChart'), {
+    type: 'bar',
+    data: {
+      labels: gs.map(g => g.date.slice(5)),
+      datasets:[
+        {label:'xGF', data:gs.map(g=>g.xgf), backgroundColor:gs.map(g=>g.xgf>=g.xga?'rgba(62,207,142,0.75)':'rgba(62,207,142,0.3)'),borderRadius:2},
+        {label:'xGA', data:gs.map(g=>-g.xga), backgroundColor:gs.map(g=>g.xga>g.xgf?'rgba(224,112,112,0.75)':'rgba(224,112,112,0.3)'),borderRadius:2},
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:true,labels:{color:'#888',font:{size:10},boxWidth:8}},tooltip:tt},
+      onClick:(e,els)=>{ if(els.length) selectGame(gs[els[0].index].game_id); },
+      scales:{x:{grid:{color:gc},ticks:{color:'#555',font:{size:9},maxRotation:45}},
+              y:{grid:{color:gc},ticks:{color:'#888',font:{size:10},callback:v=>Math.abs(v).toFixed(1)}}}}
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════
+// SHOT MAP
+// ══════════════════════════════════════════════════════════════════
+function calcXG(s) {
+  const d = s.distance;
+  if (!d) return 0.115;
+  let base = d<=10?0.200:d<=20?0.182:d<=30?0.145:d<=40?0.089:d<=55?0.058:0.029;
+  const mult = {deflected:1.4,'tip-in':1.35,'wrap-around':0.9,backhand:0.85,snap:1.05,slap:0.9,wrist:1.0}[(s.shot_type||'').toLowerCase()]||1.0;
+  return Math.min(base*mult, 0.95);
+}
+
+function smGetFiltered() {
+  const shots = curTeamData?.shots || [];
+  return shots.filter(s => {
+    // Team filter
+    if (smFilters.team === 'team' && s.shooting_team !== curTeam) return false;
+    if (smFilters.team === 'opp'  && s.shooting_team === curTeam) return false;
+    // Game filter
+    if (smFilters.game && s.game_id !== smFilters.game) return false;
+    // Player filter (only for team shots)
+    if (smFilters.player && (s.shooting_team !== curTeam || s.shooter_id !== smFilters.player)) return false;
+    if (smFilters.result !== 'all' && s.event_type !== smFilters.result) return false;
+    if (smFilters.sit !== 'all' && s.situation !== smFilters.sit) return false;
+    if (smFilters.period !== 'all' && s.period !== smFilters.period) return false;
+    return true;
+  });
+}
+
+function smResult(v,btn) { smFilters.result=v; smFnActive(btn,'smResult'); smRender(); }
+function smSit(v,btn)    { smFilters.sit=v;    smFnActive(btn,'smSit');    smRender(); }
+function smPeriod(v,btn) { smFilters.period=v; smFnActive(btn,'smPeriod');smRender(); }
+function smTeam(v,btn) {
+  smFilters.team=v;
+  smFnActive(btn,'smTeam');
+  const lbl=document.getElementById('rinkLabelLeft');
+  if (lbl) lbl.setAttribute('fill', v==='both'?'rgba(0,0,50,0.25)':'rgba(0,0,50,0.0)');
+  smRender();
+}
+
+function smSetGame(val) {
+  smFilters.game = val ? parseInt(val) : null;
+  const banner = document.getElementById('gameActiveBanner');
+  const bannerText = document.getElementById('gameActiveBannerText');
+  if (banner && bannerText) {
+    if (smFilters.game) {
+      const g = (curTeamData?.game_summaries||[]).find(x=>x.game_id===smFilters.game);
+      bannerText.textContent = g ? `Showing: ${g.date} vs ${g.opponent}` : 'Game filter active';
+      banner.style.display = 'flex';
+    } else {
+      banner.style.display = 'none';
+    }
+  }
+  smRender();
+}
+
+function populateGameSelect() {
+  const sel = document.getElementById('smGameSelect');
+  if (!sel) return;
+  const gs = curTeamData?.game_summaries || [];
+  // Clear existing options except "Full season"
+  sel.innerHTML = '<option value="">Full season</option>';
+  gs.forEach(g => {
+    const opt = document.createElement('option');
+    opt.value = g.game_id;
+    opt.textContent = `${g.date.slice(5)} ${g.is_home?'vs':'@'} ${g.opponent} (${g.team_score??'?'}-${g.opp_score??'?'})`;
+    if (smFilters.game === g.game_id) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+function smFnActive(btn, fnName) {
+  document.querySelectorAll('#page-shotmap .fg-row .filter-btn').forEach(b => {
+    if (b.getAttribute('onclick')?.startsWith(fnName)) b.classList.remove('active');
+  });
+  btn.classList.add('active');
+}
+
+function smSelectPlayer(id, name) {
+  const numId = parseInt(id);
+  smFilters.player = smFilters.player === numId ? null : numId;
+  document.querySelectorAll('.player-btn').forEach(b => b.classList.remove('active'));
+  if (smFilters.player) {
+    document.querySelector(`.player-btn[data-id="${id}"]`)?.classList.add('active');
+    document.getElementById('smTitle').textContent = name;
+  } else {
+    document.getElementById('smTitle').textContent = 'All Skaters';
+  }
+  smRender();
+}
+
+function smView(v, btn) {
+  smCurrentView = v;
+  document.querySelectorAll('.vt-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('rinkWrap').style.display = v==='map'?'flex':'none';
+  const cw = document.getElementById('chartsWrap');
+  if (v === 'charts') { cw.classList.add('active'); smDrawCharts(); }
+  else cw.classList.remove('active');
+}
+
+function buildPlayerList() {
+  const shots = curTeamData?.shots || [];
+  const map = {};
+  for (const s of shots) {
+    if (s.shooting_team !== curTeam || !s.shooter_id) continue;
+    if (!map[s.shooter_id]) map[s.shooter_id] = {id:s.shooter_id,name:s.shooter_name,shots:0,goals:0,on_goal:0};
+    map[s.shooter_id].shots++;
+    if (s.is_goal) map[s.shooter_id].goals++;
+    if (s.is_on_goal) map[s.shooter_id].on_goal++;
+  }
+  smRenderPlayerList(Object.values(map).sort((a,b)=>b.shots-a.shots), '');
+}
+
+function smSearchPlayer(q) {
+  const shots = curTeamData?.shots || [];
+  const map = {};
+  for (const s of shots) {
+    if (s.shooting_team !== curTeam || !s.shooter_id) continue;
+    if (!map[s.shooter_id]) map[s.shooter_id] = {id:s.shooter_id,name:s.shooter_name,shots:0,goals:0,on_goal:0};
+    map[s.shooter_id].shots++;
+    if (s.is_goal) map[s.shooter_id].goals++;
+    if (s.is_on_goal) map[s.shooter_id].on_goal++;
+  }
+  smRenderPlayerList(Object.values(map).sort((a,b)=>b.shots-a.shots), q);
+}
+
+function smRenderPlayerList(players, q) {
+  document.getElementById('playerList').innerHTML = players
+    .filter(p => p.name.toLowerCase().includes(q.toLowerCase()))
+    .map(p => {
+      const pct = p.on_goal > 0 ? (p.goals/p.on_goal*100).toFixed(1)+'%' : '—';
+      return `<button class="player-btn ${smFilters.player===p.id?'active':''}"
+        data-id="${p.id}" onclick="smSelectPlayer('${p.id}','${p.name}')">
+        <span>${p.name}</span><span class="ppct">${p.shots}s · ${pct}</span>
+      </button>`;
+    }).join('');
+}
+
+function nhlToSvg(x, y) {
+  return [300 + (x/100)*272, 130 - (y/42.5)*115];
+}
+
+function smRender() {
+  const shots = smGetFiltered();
+  const forShots = shots.filter(s => s.shooting_team === curTeam);
+  const goals   = forShots.filter(s => s.is_goal).length;
+  const onGoal  = forShots.filter(s => s.is_on_goal).length;
+  const xg      = forShots.reduce((s,sh) => s+(sh.xg||calcXG(sh)), 0).toFixed(2);
+  document.getElementById('smShots').textContent  = forShots.length;
+  document.getElementById('smGoals').textContent  = goals;
+  document.getElementById('smShPct').textContent  = onGoal>0?(goals/onGoal*100).toFixed(1)+'%':'—';
+  document.getElementById('smXG').textContent     = xg;
+  document.getElementById('smSub').textContent    = smFilters.game
+    ? `Game filter active · ${shots.length} total shots`
+    : `${(curTeamData?.shots||[]).length} season shot attempts`;
+  smUpdateZoneTable(forShots);
+  if (smCurrentView === 'map') smRenderMap(shots);
+  else smDrawCharts();
+}
+
+function smUpdateZoneTable(shots) {
+  const zd = {crease:{s:0,g:0,og:0,xg:0},slot:{s:0,g:0,og:0,xg:0},mid:{s:0,g:0,og:0,xg:0},perimeter:{s:0,g:0,og:0,xg:0}};
+  for (const s of shots) {
+    const z = s.zone;
+    if (zd[z]) { zd[z].s++; if(s.is_goal)zd[z].g++; if(s.is_on_goal)zd[z].og++; zd[z].xg+=s.xg||calcXG(s); }
+  }
+  document.getElementById('zoneTbody').innerHTML = ['crease','slot','mid','perimeter'].map(z => {
+    const d=zd[z]; const pct=d.og>0?(d.g/d.og*100).toFixed(1)+'%':'—';
+    return `<tr>
+      <td><span class="zone-dot" style="background:${ZONES[z].color}"></span>${ZONES[z].label}</td>
+      <td>${d.s}</td><td>${d.g}</td><td>${pct}</td><td>${d.xg.toFixed(2)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function smRenderMap(shots) {
+  const g = document.getElementById('shotDots');
+  g.innerHTML = '';
+  const bothTeams = smFilters.team === 'both';
+  const sorted = [...shots].sort((a,b) => {
+    if (a.is_goal && !b.is_goal) return 1;
+    if (!a.is_goal && b.is_goal) return -1;
+    return 0;
+  });
+  for (const s of sorted) {
+    if (s.x === null || s.y === null) continue;
+    let sx, sy;
+    if (bothTeams && s.shooting_team !== curTeam) {
+      const [rx,ry] = nhlToSvg(s.x, s.y);
+      sx = 600 - rx; sy = ry;
+    } else {
+      [sx, sy] = nhlToSvg(s.x, s.y);
+    }
+    if (sx<0||sx>600||sy<0||sy>260) continue;
+    const color = RESULT_COLORS[s.event_type] || '#888';
+    const r = s.is_goal ? 5 : 3.5;
+    const isFor = s.shooting_team === curTeam;
+    const op = s.is_goal ? 0.95 : bothTeams&&!isFor ? 0.4 : 0.6;
+    const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx',sx); c.setAttribute('cy',sy); c.setAttribute('r',r);
+    c.setAttribute('fill',color); c.setAttribute('opacity',op);
+    c.setAttribute('stroke',s.is_goal?'rgba(255,255,255,0.5)':'none');
+    c.setAttribute('stroke-width','1');
+    c.style.cursor = 'pointer';
+    const xg = (s.xg||calcXG(s)).toFixed(3);
+    const teamLabel = isFor ? curTeam : (s.shooting_team||'OPP');
+    c.addEventListener('mouseenter', e => {
+      const tip = document.getElementById('shotTip');
+      tip.style.display = 'block';
+      tip.innerHTML = `<strong style="color:${color}">${s.event_type.replace(/-/g,' ').replace(/\b\w/g,x=>x.toUpperCase())}</strong> <span style="color:var(--muted2);font-size:10px">${teamLabel}</span><br>${s.shooter_name} · ${s.shot_type||'unknown'}<br>P${s.period} ${s.time} · ${s.situation}<br>Distance: ${s.distance?s.distance+'ft':'—'} · xG: ${xg}`;
+      tip.style.left=(e.clientX+14)+'px'; tip.style.top=(e.clientY-10)+'px';
+    });
+    c.addEventListener('mousemove', e => {
+      const tip=document.getElementById('shotTip');
+      tip.style.left=(e.clientX+14)+'px'; tip.style.top=(e.clientY-10)+'px';
+    });
+    c.addEventListener('mouseleave', () => document.getElementById('shotTip').style.display='none');
+    g.appendChild(c);
+  }
+}
+
+function smDrawCharts() {
+  const shots = smGetFiltered().filter(s => s.shooting_team === curTeam);
+  const gc = 'rgba(255,255,255,0.04)';
+  const tt = {backgroundColor:'#13151a',borderColor:'rgba(221,219,241,0.15)',borderWidth:1,titleColor:'#DDDBF1',bodyColor:'#AB9F9D',padding:9};
+  const base = {responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:tt},
+    scales:{x:{grid:{color:gc},ticks:{color:'#aaa',font:{size:11}}},
+            y:{grid:{color:gc},ticks:{color:'#aaa',font:{size:11}}}}};
+
+  const bins=[0,10,20,30,40,55,80], bL=['0-10ft','10-20ft','20-30ft','30-40ft','40-55ft','55ft+'];
+  const bC=Array(bL.length).fill(0), bG=Array(bL.length).fill(0);
+  for (const s of shots) {
+    if (!s.distance) continue;
+    const bi = bins.findIndex((b,i)=>s.distance>=b&&s.distance<(bins[i+1]||999));
+    if (bi>=0&&bi<bC.length) { bC[bi]++; if(s.is_goal)bG[bi]++; }
+  }
+  if (distChart) distChart.destroy();
+  distChart = new Chart(document.getElementById('distChart'),{type:'bar',
+    data:{labels:bL,datasets:[
+      {label:'Shots',data:bC,backgroundColor:'rgba(60,79,118,0.75)',borderRadius:2},
+      {label:'Goals',data:bG,backgroundColor:'rgba(62,207,142,0.85)',borderRadius:2},
+    ]},
+    options:{...base,plugins:{...base.plugins,legend:{display:true,labels:{color:'#ccc',font:{size:11},boxWidth:10}}}}
+  });
+
+  const tm={};
+  for (const s of shots) {
+    const t=s.shot_type||'unknown';
+    if (!tm[t]) tm[t]={s:0,g:0};
+    tm[t].s++; if(s.is_goal)tm[t].g++;
+  }
+  const types=Object.entries(tm).sort((a,b)=>b[1].s-a[1].s);
+  if (typeChart) typeChart.destroy();
+  typeChart = new Chart(document.getElementById('typeChart'),{type:'bar',
+    data:{labels:types.map(t=>t[0]),datasets:[
+      {label:'Shots',data:types.map(t=>t[1].s),backgroundColor:'rgba(60,79,118,0.75)',borderRadius:2},
+      {label:'Goals',data:types.map(t=>t[1].g),backgroundColor:'rgba(62,207,142,0.85)',borderRadius:2},
+    ]},
+    options:{...base,plugins:{...base.plugins,legend:{display:true,labels:{color:'#ccc',font:{size:11},boxWidth:10}}}}
+  });
+
+  const zd={crease:{s:0,g:0,og:0},slot:{s:0,g:0,og:0},mid:{s:0,g:0,og:0},perimeter:{s:0,g:0,og:0}};
+  for (const s of shots) {
+    const z=s.zone;
+    if(zd[z]){zd[z].s++;if(s.is_goal)zd[z].g++;if(s.is_on_goal)zd[z].og++;}
+  }
+  const zOrder=['crease','slot','mid','perimeter'];
+  if (zoneChart) zoneChart.destroy();
+  zoneChart = new Chart(document.getElementById('zoneChart'),{type:'bar',
+    data:{labels:zOrder.map(z=>ZONES[z].label),
+      datasets:[{data:zOrder.map(z=>zd[z].og>0?+(zd[z].g/zd[z].og*100).toFixed(1):0),
+        backgroundColor:zOrder.map(z=>ZONES[z].color+'bb'),borderRadius:2}]},
+    options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{color:'#aaa',font:{size:11},callback:v=>v+'%'}}}}
+  });
+}
+
+init();
+</script>
+</body>
+</html>
