@@ -563,7 +563,7 @@ async function loadTeamData(abbr) {
   const th = document.getElementById('teamHeader');
   if (th) th.innerHTML = `<div style="padding:20px 140px;color:var(--muted2);font-size:12px;font-style:italic;">Loading ${abbr} data…</div>`;
 
-  const r = await fetch(`data/nhl_shots_${abbr}_${season}.json`);
+  const r = await fetch(`data/nhl_shots_${abbr}_${curSeason}.json`);
   if (!r.ok) throw new Error(`No data file for ${abbr}`);
   const teamData = await r.json();
   TEAM_CACHE[abbr] = teamData;
