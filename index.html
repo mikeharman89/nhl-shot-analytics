@@ -589,7 +589,7 @@ async function init() {
 
   try {
     await loadSeason(defaultSeason);
-    const n = Object.keys(DATA.teams||{}).length;
+    const n = (DATA.league_summary||[]).length;
     document.getElementById('page-league').innerHTML = `
       <div class="league-header">
         <div class="lh-eye">2025–26 Regular Season · All ${n} Teams</div>
