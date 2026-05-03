@@ -2,7 +2,7 @@
 
 An interactive league-wide shot analytics dashboard covering all 32 NHL teams for the 2025–26 season. Built on the NHL's public API — no keys, no paid data sources.
 
-**[View the dashboard →](https://yourusername.github.io/nhl-shot-data/)**
+**[View the dashboard →](https://mikeharman89.github.io/nhl-shot-analytics/)**
 
 ---
 
